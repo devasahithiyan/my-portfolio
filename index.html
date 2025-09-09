@@ -304,9 +304,9 @@ Feel free to explore the files, open the terminal, and check out my work. You ca
                  const highlightClass = isHighlighted ? 'line-highlight' : '';
                  const breakpointHtml = isHighlighted ? '<div class="line-breakpoint"></div>' : '';
 
-                 html += `<div class="flex items-start leading-6 relative ${highlightClass}">
-                             <span class="text-right pr-4 text-[var(--text-muted)] select-none w-12">${i + 1} ${breakpointHtml}</span>
-                             <div class="flex-grow">${line || '&nbsp;'}</div>
+                 html += `<div class="flex items-start min-h-[24px] relative ${highlightClass}">
+                             <span class="text-right pr-4 text-[var(--text-muted)] select-none w-12 flex-shrink-0">${i + 1} ${breakpointHtml}</span>
+                             <div class="flex-grow break-words">${line || '&nbsp;'}</div>
                           </div>`;
              });
              html += '</div>';
@@ -339,16 +339,16 @@ Feel free to explore the files, open the terminal, and check out my work. You ca
             const content = `
 <span class="syntax-comment">// Professional Summary</span>
 <span><span class="syntax-keyword">const</span> <span class="syntax-identifier">developer</span> <span class="text-[var(--text-primary)]">=</span> {</span>
-<span class="pl-4"><span class="syntax-identifier">name</span>: <span class="syntax-string">'${portfolioData.name}'</span>,</span>
-<span class="pl-4"><span class="syntax-identifier">title</span>: <span class="syntax-string">'${portfolioData.role}'</span>,</span>
-<span class="pl-4"><span class="syntax-identifier">summary</span>: <span class="syntax-string">\`</span></span>
-${portfolioData.bio.map(line => `<span class="pl-8 syntax-string">${line}</span>`).join('\n')}
-<span class="pl-4"><span class="syntax-string">\`</span>,</span>
-<span class="pl-4"><span class="syntax-identifier">contact</span>: {</span>
-<span class="pl-8"><span class="syntax-identifier">email</span>: <span class="syntax-string">'${portfolioData.contact.email}'</span>,</span>
-<span class="pl-8"><span class="syntax-identifier">github</span>: <span class="syntax-string">'${portfolioData.contact.github}'</span>,</span>
-<span class="pl-8"><span class="syntax-identifier">linkedin</span>: <span class="syntax-string">'${portfolioData.contact.linkedin}'</span></span>
-<span class="pl-4">}</span>
+<div class="pl-4"><span class="syntax-identifier">name</span>: <span class="syntax-string">'${portfolioData.name}'</span>,</div>
+<div class="pl-4"><span class="syntax-identifier">title</span>: <span class="syntax-string">'${portfolioData.role}'</span>,</div>
+<div class="pl-4"><span class="syntax-identifier">summary</span>: <span class="syntax-string">\`</span></div>
+${portfolioData.bio.map(line => `<div class="pl-8 syntax-string">${line}</div>`).join('\n')}
+<div class="pl-4"><span class="syntax-string">\`</span>,</div>
+<div class="pl-4"><span class="syntax-identifier">contact</span>: {</div>
+<div class="pl-8"><span class="syntax-identifier">email</span>: <a href="mailto:${portfolioData.contact.email}" class="syntax-string hover:underline">'${portfolioData.contact.email}'</a>,</div>
+<div class="pl-8"><span class="syntax-identifier">github</span>: <a href="https://github.com/${portfolioData.contact.github}" target="_blank" class="syntax-string hover:underline">'${portfolioData.contact.github}'</a>,</div>
+<div class="pl-8"><span class="syntax-identifier">linkedin</span>: <a href="https://linkedin.com/in/${portfolioData.contact.linkedin}" target="_blank" class="syntax-string hover:underline">'${portfolioData.contact.linkedin}'</a></div>
+<div class="pl-4">}</div>
 <span>};</span>
             `;
             return renderLineNumbers(content);
@@ -747,4 +747,6 @@ ${project.stack.map(tech => `<span class="pl-4 syntax-string">'${tech}',</span>`
     </script>
 </body>
 </html>
+
+
 
