@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deva Sahithiyan's Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        :root {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #252526;
+            --bg-tertiary: #333333;
+            --text-primary: #d4d4d4;
+            --text-secondary: #cccccc;
+            --text-muted: #858585;
+            --border-primary: #3c3c3c;
+            --accent-primary: #007acc;
+            --activity-indicator: #ffffff;
+            --scrollbar-thumb: #424242;
+
+            --syntax-comment: #6A9955;
+            --syntax-keyword: #C586C0;
+            --syntax-identifier: #9CDCFE;
+            --syntax-string: #CE9178;
+        }
+
+        body[data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f3f3f3;
+            --bg-tertiary: #e6e6e6;
+            --text-primary: #000000;
+            --text-secondary: #333333;
+            --text-muted: #7a7a7a;
+            --border-primary: #d4d4d4;
+            --accent-primary: #007acc;
+            --activity-indicator: #000000;
+            --scrollbar-thumb: #cccccc;
+
+            --syntax-comment: #008000;
+            --syntax-keyword: #0000ff;
+            --syntax-identifier: #267f99;
+            --syntax-string: #a31515;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            cursor: default;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        .sidebar { transition: transform 0.2s ease-in-out, width 0.2s ease-in-out; }
+        .bottom-panel { transition: height 0.2s ease-in-out; }
+        
+        .resizer-x { cursor: col-resize; width: 4px; background-color: transparent; position: relative; z-index: 10; }
+        .resizer-y { cursor: row-resize; height: 4px; background-color: transparent; position: relative; z-index: 10; }
+        .resizer-x:hover, .resizer-y:hover { background-color: var(--accent-primary); }
+
+
+        .minimap {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100%;
+            background-color: rgba(0,0,0,0.1);
+            opacity: 0.7;
+            padding: 10px 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .minimap-line {
+            height: 2px;
+            background-color: var(--text-muted);
+            margin: 2px 5px;
+            opacity: 0.8;
+            border-radius: 1px;
+        }
+        .readme-content { line-height: 1.6; }
+        .readme-content h1 { font-size: 1.5em; font-weight: bold; border-bottom: 1px solid var(--border-primary); padding-bottom: 0.3em; margin-bottom: 0.5em;}
+        .readme-content h2 { font-size: 1.25em; font-weight: bold; border-bottom: 1px solid var(--border-primary); padding-bottom: 0.3em; margin-bottom: 0.5em;}
+        .readme-content p { margin-bottom: 1em; }
+        .readme-content code { background-color: var(--bg-secondary); padding: 2px 4px; border-radius: 3px; font-family: 'JetBrains Mono';}
+        .readme-content a { color: #4e94ce; text-decoration: none; }
+        .readme-content a:hover { text-decoration: underline; }
+
+        .line-highlight { background-color: rgba(255, 255, 0, 0.15); border-left: 2px solid #ffcc00; }
+        .line-breakpoint { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 10px; height: 10px; background-color: #e51400; border-radius: 50%; }
+        
+        /* Themed Colors */
+        #activity-bar { background-color: var(--bg-tertiary); }
+        .sidebar { background-color: var(--bg-secondary); }
+        #tabs-container { background-color: var(--bg-secondary); }
+        .tab-btn { border-color: var(--border-primary); }
+        .tab-btn.active { background-color: var(--bg-primary); color: var(--text-primary); border-top-color: var(--accent-primary); }
+        .tab-btn:not(.active) { background-color: var(--bg-secondary); color: var(--text-muted); }
+        #breadcrumbs-container, .bottom-panel { background-color: var(--bg-primary); border-color: var(--border-primary); }
+        #editor-container { background-color: var(--bg-primary); }
+        footer { background-color: var(--accent-primary); }
+        .activity-indicator { background-color: var(--activity-indicator); }
+        .section-header:hover { background-color: rgba(255,255,255,0.05)}
+        body[data-theme="light"] .section-header:hover { background-color: rgba(0,0,0,0.05)}
+        
+        .syntax-comment { color: var(--syntax-comment); }
+        .syntax-keyword { color: var(--syntax-keyword); }
+        .syntax-identifier { color: var(--syntax-identifier); }
+        .syntax-string { color: var(--syntax-string); }
+
+    </style>
+</head>
+<body class="bg-[#1e1e1e] text-[#d4d4d4] h-screen overflow-hidden select-none" data-theme="dark">
+    
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-[var(--bg-secondary)] w-full max-w-4xl h-full max-h-[80vh] rounded-lg shadow-2xl flex flex-col">
+            <header class="p-2 border-b border-[var(--border-primary)] flex justify-between items-center flex-shrink-0">
+                <div class="flex items-center">
+                    <button class="px-3 py-1 text-sm bg-[var(--bg-primary)] rounded-md">Settings</button>
+                </div>
+                <button id="close-settings-btn" class="p-1 rounded-md hover:bg-[var(--bg-tertiary)]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </header>
+            <div class="flex flex-1 min-h-0">
+                <div class="w-56 p-4 border-r border-[var(--border-primary)] flex-shrink-0 hidden sm:block">
+                    <input type="search" placeholder="Search settings" class="w-full p-2 mb-4 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--accent-primary)] text-[var(--text-primary)]">
+                    <ul class="space-y-1 text-sm">
+                        <li><button class="w-full text-left p-2 rounded-md bg-[var(--accent-primary)] bg-opacity-20 text-[var(--accent-primary)]">Appearance</button></li>
+                    </ul>
+                </div>
+                <div class="flex-1 p-6 sm:p-8 overflow-y-auto">
+                    <h2 class="text-lg font-bold mb-4">Appearance</h2>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm mb-2">Color Theme</label>
+                            <p class="text-xs text-[var(--text-muted)] mb-2">Specifies the color theme used in the portfolio.</p>
+                            <div class="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0">
+                                <label class="flex items-center space-x-2">
+                                    <input type="radio" name="theme" value="dark" class="form-radio text-[var(--accent-primary)] bg-[var(--bg-primary)] border-[var(--border-primary)]" checked>
+                                    <span>Dark+ (Default)</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    <input type="radio" name="theme" value="light" class="form-radio text-[var(--accent-primary)] bg-[var(--bg-primary)] border-[var(--border-primary)]">
+                                    <span>Light+ (Default)</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="flex flex-col h-full">
+        <div class="flex flex-1 min-h-0">
+        <!-- Activity Bar -->
+        <div id="activity-bar" class="hidden md:flex flex-col justify-between items-center py-2 flex-shrink-0">
+            <div class="flex flex-col space-y-1">
+                <button data-view="explorer" class="activity-btn p-3 relative"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg></button>
+                <button data-view="projects" class="activity-btn p-3 relative"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg></button>
+                <button data-view="debug" class="activity-btn p-3 relative"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6V8a6 6 0 0 1 12 0v6c0 3.3-2.7 6-6 6Z"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 9.3 3 11.4 3 14"/><path d="M17.47 9c1.9 0.3 3.5 2.4 3.5 5"/></svg></button>
+                <button data-view="contact" class="activity-btn p-3 relative"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></button>
+            </div>
+            <div>
+                <button id="open-settings-btn" class="activity-btn p-3 text-[#cccccc] hover:text-white"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l-.15.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+            </div>
+        </div>
+        
+        <div id="sidebar-resizer" class="resizer-x hidden md:block"></div>
+        
+        <!-- Sidebar -->
+        <div id="sidebar" class="sidebar flex-shrink-0 overflow-y-auto"></div>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col min-w-0">
+            <div class="flex flex-col flex-1 min-h-0">
+                <!-- Top Pane (Tabs and Editor) -->
+                <div class="flex flex-col flex-1 relative min-h-0">
+                    <div id="tabs-container" class="flex items-center overflow-x-auto">
+                         <button id="mobile-menu-btn" class="p-2 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] md:hidden">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                        </button>
+                    </div>
+                    <div id="breadcrumbs-container" class="text-sm flex items-center px-4 py-1 border-b"></div>
+                    <main id="editor-container" class="flex-1 overflow-hidden relative">
+                       <div id="editor-content" class="h-full overflow-y-auto"></div>
+                       <div id="minimap-container" class="minimap hidden md:block"></div>
+                    </main>
+                </div>
+                
+                <div id="bottom-panel-resizer" class="resizer-y hidden md:block"></div>
+
+                <!-- Bottom Panel -->
+                <div id="bottom-panel" class="bottom-panel border-t flex-shrink-0 overflow-hidden" style="height: 0px;">
+                    <div class="bg-[var(--bg-secondary)] h-8 flex items-center px-4 text-sm border-b border-[var(--border-primary)]">
+                        <button class="px-2 py-1 border-b-2 border-[var(--activity-indicator)] text-[var(--text-primary)]">TERMINAL</button>
+                    </div>
+                    <div id="terminal-content" class="h-full"></div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="px-4 py-0 text-xs text-white flex items-center justify-between z-10 h-6 flex-shrink-0">
+            <div class="flex items-center space-x-4 h-full">
+                <a href="#" id="footer-github-branch" class="flex items-center hover:bg-white/20 h-full px-2 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><line x1="6" y1="3" x2="6" y2="15"></line><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg>main</a>
+                <div class="hidden sm:flex items-center hover:bg-white/20 h-full px-2"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> 0 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> 0</div>
+            </div>
+            <div class="flex items-center space-x-4 h-full">
+                <div class="hidden sm:flex items-center hover:bg-white/20 h-full px-2"><span id="footer-ln-col">Ln 1, Col 1</span></div>
+                <div class="hidden sm:flex items-center hover:bg-white/20 h-full px-2"><span>Spaces: 4</span></div>
+                <div class="hidden sm:flex items-center hover:bg-white/20 h-full px-2"><span>UTF-8</span></div>
+                <div class="hidden sm:flex items-center hover:bg-white/20 h-full px-2"><span id="footer-lang">JavaScript</span></div>
+                <button id="toggle-terminal-btn" class="flex items-center hover:bg-white/20 h-full px-2 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg></button>
+                <button class="flex items-center hover:bg-white/20 h-full px-2 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg></button>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const portfolioData = {
+          name: "Deva Sahithiyan A S",
+          role: "Data Engineer",
+          readme: `
+# Deva Sahithiyan's Portfolio
+
+## Welcome to my interactive portfolio!
+
+This project is a recreation of the Visual Studio Code interface, built with vanilla JavaScript and Tailwind CSS. It's designed to showcase my projects and skills in a creative and familiar environment for developers.
+
+Feel free to explore the files, open the terminal, and check out my work. You can connect with me via the links in the contact panel.
+          `,
+          bio: [
+            "Data Engineer with a strong software development foundation and hands-on experience in designing and building robust ETL pipelines.",
+            "Proficient in Python, Pandas, SQL, and modern data orchestration tools like Dagster.",
+            "Seeking to leverage data processing and automation skills to provide clean, reliable data for analytical and operational needs."
+          ],
+          contact: {
+            email: "devasahithiyan@gmail.com",
+            github: "deva-sahithiyan",
+            linkedin: "devasahithiyan"
+          },
+          skills: {
+            "Data Engineering": ["Python", "Pandas", "SQL", "ETL Pipeline Design", "Dagster"],
+            "Languages": ["Java", "JavaScript", "TypeScript", "HTML", "CSS"],
+            "Web Development": ["Node.js", "Express", "REST APIs"],
+            "Databases": ["MySQL", "Firebase"],
+            "Tools & Platforms": ["Git/GitHub", "Docker", "Postman", "Linux/UNIX"],
+            "Methodologies": ["Agile (Scrum)"]
+          },
+          projects: [
+            { id: "project-1", title: "ETL Data Pipeline", description: "Built an end-to-end ETL pipeline to process raw data from a source database into an analytics-ready format. Implemented a staging area for data cleaning and validation, applying transformations using Python and Pandas. Designed and loaded the transformed data into a target database modeled with a Snowflake schema for efficient querying.", stack: ["Python", "Pandas", "SQL", "Data Modeling"], github: "https://github.com/deva-sahithiyan", live: null },
+            { id: "project-2", title: "Jira Clone Backend", description: "Engineered a complete backend system with RESTful APIs for task management, user authentication, and project tracking. Designed a relational database schema in MySQL to manage relationships between projects, issues, and users.", stack: ["Node.js", "Express", "TypeScript", "MySQL", "JWT"], github: "https://github.com/deva-sahithiyan", live: null },
+            { id: "project-3", title: "UCD Room Mate", description: "Developed a platform for university students to find compatible roommates, implementing real-time messaging.", stack: ["JavaScript", "Node.js", "HTML", "CSS", "Firebase"], github: "https://github.com/deva-sahithiyan", live: null },
+          ]
+        };
+        
+        // --- STATE ---
+        let isMobile = window.innerWidth < 768;
+        let activeTab = 'README.md';
+        let openTabs = ['README.md'];
+        let sidebarVisible = !isMobile;
+        let sidebarWidth = 256;
+        let activeView = 'explorer';
+        let bottomPanelVisible = false;
+        let bottomPanelHeight = 200;
+        let terminalLines = [{ type: 'info', text: 'Welcome! Type `help` for commands.' }];
+        let isDebugMode = false;
+        
+        // --- DOM Elements ---
+        const sidebar = document.getElementById('sidebar');
+        const activityBar = document.getElementById('activity-bar');
+        const editorContent = document.getElementById('editor-content');
+        const tabsContainer = document.getElementById('tabs-container');
+        const breadcrumbsContainer = document.getElementById('breadcrumbs-container');
+        const bottomPanel = document.getElementById('bottom-panel');
+        const terminalContent = document.getElementById('terminal-content');
+        const toggleTerminalBtn = document.getElementById('toggle-terminal-btn');
+        const footerLang = document.getElementById('footer-lang');
+        const footerLnCol = document.getElementById('footer-ln-col');
+        const minimapContainer = document.getElementById('minimap-container');
+        const sidebarResizer = document.getElementById('sidebar-resizer');
+        const bottomPanelResizer = document.getElementById('bottom-panel-resizer');
+        const settingsModal = document.getElementById('settings-modal');
+        const openSettingsBtn = document.getElementById('open-settings-btn');
+        const closeSettingsBtn = document.getElementById('close-settings-btn');
+        
+        // --- RENDER FUNCTIONS ---
+        
+        const renderLineNumbers = (content, highlightLine = -1) => {
+             const lines = content.split('\n');
+             let html = '<div class="p-4 sm:p-6 font-mono text-xs sm:text-sm">';
+             lines.forEach((line, i) => {
+                 const isHighlighted = i + 1 === highlightLine;
+                 const highlightClass = isHighlighted ? 'line-highlight' : '';
+                 const breakpointHtml = isHighlighted ? '<div class="line-breakpoint"></div>' : '';
+
+                 html += `<div class="flex items-start leading-6 relative ${highlightClass}">
+                             <span class="text-right pr-4 text-[var(--text-muted)] select-none w-12">${i + 1} ${breakpointHtml}</span>
+                             <div class="flex-grow">${line || '&nbsp;'}</div>
+                          </div>`;
+             });
+             html += '</div>';
+             return html;
+        };
+
+        const renderReadmeContent = () => {
+            let html = portfolioData.readme
+                .trim()
+                .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                .replace(/`(.*?)`/g, '<code>$1</code>')
+                .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>')
+                .replace(/\n/g, '<br/>');
+            return `<div class="p-8 readme-content">${html}</div>`;
+        };
+        
+        const renderMinimap = (content) => {
+            const lines = content.split('\n');
+            const maxLines = 100; // Limit lines for performance
+            minimapContainer.innerHTML = lines.slice(0, maxLines).map(line => {
+                const simplified = line.replace(/\s/g, '');
+                if (!simplified) return '<div class="minimap-line" style="width: 0px;"></div>';
+                const width = Math.min(80, simplified.length * 1.2);
+                return `<div class="minimap-line" style="width: ${width}px;"></div>`
+            }).join('');
+        };
+
+        const renderAboutContent = () => {
+            const content = `
+<span class="syntax-comment">// Professional Summary</span>
+<span><span class="syntax-keyword">const</span> <span class="syntax-identifier">developer</span> <span class="text-[var(--text-primary)]">=</span> {</span>
+<span class="pl-4"><span class="syntax-identifier">name</span>: <span class="syntax-string">'${portfolioData.name}'</span>,</span>
+<span class="pl-4"><span class="syntax-identifier">title</span>: <span class="syntax-string">'${portfolioData.role}'</span>,</span>
+<span class="pl-4"><span class="syntax-identifier">summary</span>: <span class="syntax-string">\`</span></span>
+${portfolioData.bio.map(line => `<span class="pl-8 syntax-string">${line}</span>`).join('\n')}
+<span class="pl-4"><span class="syntax-string">\`</span>,</span>
+<span class="pl-4"><span class="syntax-identifier">contact</span>: {</span>
+<span class="pl-8"><span class="syntax-identifier">email</span>: <span class="syntax-string">'${portfolioData.contact.email}'</span>,</span>
+<span class="pl-8"><span class="syntax-identifier">github</span>: <span class="syntax-string">'${portfolioData.contact.github}'</span>,</span>
+<span class="pl-8"><span class="syntax-identifier">linkedin</span>: <span class="syntax-string">'${portfolioData.contact.linkedin}'</span></span>
+<span class="pl-4">}</span>
+<span>};</span>
+            `;
+            return renderLineNumbers(content);
+        };
+        
+        const renderSkillsContent = () => {
+            let content = '{\n';
+            const categories = Object.entries(portfolioData.skills);
+            categories.forEach(([category, skills], index) => {
+                content += `  <span class="syntax-identifier">"${category}"</span>: [\n`;
+                skills.forEach((skill, i) => {
+                    content += `    <span class="syntax-string">"${skill}"</span>${i === skills.length - 1 ? '' : ','}\n`;
+                });
+                content += `  ]${index === categories.length - 1 ? '' : ','}\n`;
+            });
+            content += '}';
+            return renderLineNumbers(content);
+        };
+
+        const renderProjectDetail = (project) => {
+             const highlight = isDebugMode ? 5 : -1;
+             const content = `
+<span class="syntax-comment">/**</span>
+<span class="syntax-comment"> * Project: ${project.title}</span>
+<span class="syntax-comment"> */</span>
+
+<span class="syntax-keyword">import</span> { <span class="syntax-identifier">Details</span> } <span class="syntax-keyword">from</span> <span class="syntax-string">'./${project.title.toLowerCase().replace(/\s/g, '-')}'</span>;
+
+<span class="syntax-comment">// Project Overview</span>
+<span><span class="syntax-identifier">Description</span>: <span class="syntax-string">\`${project.description}\`</span></span>
+
+<span class="syntax-comment">// Technologies Used</span>
+<span><span class="syntax-identifier">TechStack</span>: [</span>
+${project.stack.map(tech => `<span class="pl-4 syntax-string">'${tech}',</span>`).join('\n')}
+<span>]</span>
+
+<span class="syntax-comment">// Links</span>
+<div class="flex items-center space-x-4">
+    <a href="${project.github}" target="_blank" rel="noopener noreferrer" class="flex items-center text-[var(--syntax-identifier)] hover:underline">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg> GitHub
+    </a>
+    ${project.live ? `<a href="${project.live}" target="_blank" rel="noopener noreferrer" class="flex items-center text-[var(--syntax-identifier)] hover:underline">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg> Live Demo
+    </a>` : ''}
+</div>
+            `;
+            return renderLineNumbers(content, highlight);
+        };
+        
+        const renderTerminal = () => {
+            let html = `<div class="font-mono text-sm h-full overflow-y-auto p-2" id="terminal-output">`;
+             html += terminalLines.map(line => {
+                let textClass = '';
+                if(line.type === 'error') textClass = 'text-[#f96057]';
+                if(line.type === 'info') textClass = 'text-[#9CDCFE]';
+                return `<div class="text-[var(--text-secondary)]">${line.type === 'command' ? '<span class="text-[#4ec9b0]">$ </span>' : ''}<span class="${textClass}">${line.text}</span></div>`;
+             }).join('');
+             
+             html += `</div><form id="terminal-form" class="flex items-center p-2">
+                        <span class="text-[#4ec9b0] mr-2">$</span>
+                        <input id="terminal-input" type="text" class="bg-transparent w-full focus:outline-none text-[var(--text-primary)]" autocomplete="off" />
+                      </form>`;
+             terminalContent.innerHTML = html;
+             
+             const form = document.getElementById('terminal-form');
+             const input = document.getElementById('terminal-input');
+             const output = document.getElementById('terminal-output');
+             form.addEventListener('submit', handleTerminalSubmit);
+             input.focus();
+             output.scrollTop = output.scrollHeight;
+        };
+
+        const renderSidebarContent = () => {
+            let html = '';
+            const section = (title, content, isOpen = true) => `
+            <div class="border-b border-[var(--border-primary)] section">
+                <button class="section-header flex items-center justify-between w-full text-left p-2">
+                    <div class="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron w-4 h-4 text-[var(--text-secondary)] transition-transform mr-1 ${isOpen ? 'rotate-90' : ''}"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        <h2 class="text-xs font-bold text-[var(--text-secondary)] tracking-wider uppercase">${title}</h2>
+                    </div>
+                </button>
+                <div class="section-content ${isOpen ? '' : 'hidden'}">${content}</div>
+            </div>`;
+
+            if(activeView === 'explorer') {
+                html = section('Explorer', `
+                    <div class="pl-2">
+                        <div class="flex items-center py-1 text-[var(--text-secondary)]">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-1 rotate-90"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-sky-400"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                            <span class="text-sm">portfolio-devasahithiyan</span>
+                        </div>
+                        <div class="pl-6">
+                            <button data-file="README.md" class="file-node flex items-center w-full text-left py-1 pl-4 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] rounded-sm text-sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 flex-shrink-0 text-blue-400"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg><span>README.md</span></button>
+                            <button data-file="bio.js" class="file-node flex items-center w-full text-left py-1 pl-4 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] rounded-sm text-sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 flex-shrink-0 text-yellow-400"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg><span>bio.js</span></button>
+                            <button data-file="skills.json" class="file-node flex items-center w-full text-left py-1 pl-4 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] rounded-sm text-sm"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 flex-shrink-0 text-orange-400"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line></svg><span>skills.json</span></button>
+                        </div>
+                    </div>`);
+            } else if (activeView === 'projects') {
+                const projectsHtml = portfolioData.projects.map(p => `
+                    <button data-project-id="${p.id}" class="project-node flex items-center w-full text-left py-1 px-4 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] rounded-sm text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 flex-shrink-0 text-yellow-400"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                        <span>${p.title}</span>
+                    </button>`).join('');
+                html = section('Projects', `<div class="flex flex-col">${projectsHtml}</div>`);
+            } else if (activeView === 'debug') {
+                 html = section('Variables', '<div class="p-2 text-xs text-[var(--text-muted)]">this: <span class="text-purple-400">Object</span></div>') +
+                        section('Watch', '<div class="p-2 text-xs text-[var(--text-muted)]">No expressions</div>', false) +
+                        section('Call Stack', '<div class="p-2 text-xs text-[var(--text-primary)]"><span>(anonymous)</span><br><span class="text-[var(--text-muted)]">project.js:5</span></div>', false);
+            } else if (activeView === 'contact') {
+                 html = section('Contact', `<div class="flex flex-col space-y-1 p-2">
+                    <a href="mailto:${portfolioData.contact.email}" class="flex items-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm p-1 rounded-sm hover:bg-[var(--bg-tertiary)]"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg> Email</a>
+                    <a href="https://github.com/${portfolioData.contact.github}" target="_blank" rel="noopener noreferrer" class="flex items-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm p-1 rounded-sm hover:bg-[var(--bg-tertiary)]"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg> GitHub</a>
+                    <a href="https://www.linkedin.com/in/${portfolioData.contact.linkedin}" target="_blank" rel="noopener noreferrer" class="flex items-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm p-1 rounded-sm hover:bg-[var(--bg-tertiary)]"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg> LinkedIn</a>
+                </div>`);
+            }
+            sidebar.innerHTML = html;
+        };
+        
+        const updateUI = () => {
+            isMobile = window.innerWidth < 768;
+
+            // Update Activity Bar
+            activityBar.querySelectorAll('.activity-btn').forEach(btn => {
+                const view = btn.dataset.view;
+                const indicator = btn.querySelector('.activity-indicator');
+                btn.classList.remove('text-white', 'text-black');
+                btn.classList.add('text-[var(--text-secondary)]', 'hover:text-[var(--text-primary)]');
+                
+                if (activeView === view && sidebarVisible && !isMobile) {
+                    btn.classList.add('active');
+                    btn.classList.add(document.body.dataset.theme === 'dark' ? 'text-white' : 'text-black');
+                    if(!indicator) {
+                         const indicatorDiv = document.createElement('div');
+                         indicatorDiv.className = 'activity-indicator absolute left-0 top-0 bottom-0 w-[2px]';
+                         btn.appendChild(indicatorDiv);
+                    }
+                } else {
+                    btn.classList.remove('active');
+                    if(indicator) indicator.remove();
+                }
+            });
+
+            // Handle sidebar overlay for mobile
+            let backdrop = document.getElementById('sidebar-backdrop');
+            if (isMobile) {
+                sidebar.classList.add('fixed', 'z-30', 'inset-y-0', 'left-0', 'transform', 'transition-transform', 'w-64');
+                sidebar.style.width = ''; // remove inline style
+                 if (sidebarVisible) {
+                    sidebar.style.transform = 'translateX(0)';
+                    if (!backdrop) {
+                        backdrop = document.createElement('div');
+                        backdrop.id = 'sidebar-backdrop';
+                        backdrop.className = 'fixed inset-0 bg-black/50 z-20 md:hidden';
+                        document.body.appendChild(backdrop);
+                        backdrop.addEventListener('click', () => {
+                            sidebarVisible = false;
+                            updateUI();
+                        });
+                    }
+                } else {
+                    sidebar.style.transform = 'translateX(-100%)';
+                    if (backdrop) backdrop.remove();
+                }
+                 renderSidebarContent();
+            } else { // Desktop logic
+                sidebar.classList.remove('fixed', 'z-30', 'inset-y-0', 'left-0', 'transform', 'transition-transform', 'w-64');
+                sidebar.style.transform = '';
+                if (backdrop) backdrop.remove();
+
+                sidebar.style.width = sidebarVisible ? `${sidebarWidth}px` : '0px';
+                if (sidebarVisible) {
+                    renderSidebarContent();
+                } else {
+                    sidebar.innerHTML = '';
+                }
+            }
+
+
+            // Update Tabs
+            let tabsHtml = `<button id="mobile-menu-btn" class="p-2 text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] md:hidden">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                            </button>`;
+            tabsHtml += openTabs.map(tabId => {
+                const project = portfolioData.projects.find(p => `${p.title.toLowerCase().replace(/\s/g, '-')}.js` === tabId);
+                const name = project ? `${project.title}.js` : tabId;
+                const isActive = tabId === activeTab;
+                let icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-blue-400"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg>';
+                if (name.endsWith('.js')) icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-yellow-400"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>';
+                if (name.endsWith('.json')) icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 mr-2 text-orange-400"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line></svg>';
+                
+                return `<button data-tab-id="${tabId}" class="tab-btn flex items-center pl-4 pr-2 py-2 border-r text-sm whitespace-nowrap ${isActive ? 'active' : ''}">
+                            ${icon}
+                            <span>${name}</span>
+                            <svg data-close-id="${tabId}" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="close-btn w-4 h-4 ml-3 p-[2px] rounded-sm hover:bg-[var(--bg-tertiary)]"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>`;
+            }).join('');
+            tabsContainer.innerHTML = tabsHtml;
+            
+            // Update Editor Content & Minimap
+            let rawContentForMinimap = '';
+            if (!activeTab) {
+                editorContent.innerHTML = `<div class="p-8 text-[var(--text-muted)] font-mono text-center flex flex-col items-center justify-center h-full"><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mb-4 text-[var(--border-primary)]"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg><h1 class="text-2xl text-[var(--text-primary)] mb-2">Deva Sahithiyan's Portfolio</h1><p class="text-sm">Select a file to begin.</p></div>`;
+            } else if (activeTab === 'README.md') {
+                editorContent.innerHTML = renderReadmeContent();
+                rawContentForMinimap = portfolioData.readme;
+            } else if (activeTab === 'bio.js') {
+                const content = renderAboutContent();
+                editorContent.innerHTML = content;
+                rawContentForMinimap = editorContent.innerText;
+            } else if (activeTab === 'skills.json') {
+                const content = renderSkillsContent();
+                editorContent.innerHTML = content;
+                rawContentForMinimap = editorContent.innerText;
+            } else {
+                const project = portfolioData.projects.find(p => `${p.title.toLowerCase().replace(/\s/g, '-')}.js` === activeTab);
+                if (project) {
+                    const content = renderProjectDetail(project);
+                    editorContent.innerHTML = content;
+                    rawContentForMinimap = editorContent.innerText;
+                }
+            }
+            renderMinimap(rawContentForMinimap);
+            
+            // Update Breadcrumbs & Status Bar
+            if (activeTab) {
+                const project = portfolioData.projects.find(p => `${p.title.toLowerCase().replace(/\s/g, '-')}.js` === activeTab);
+                const name = project ? `${project.title}.js` : activeTab;
+                breadcrumbsContainer.innerHTML = `<span>portfolio-devasahithiyan</span> <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-1"><polyline points="9 18 15 12 9 6"></polyline></svg> <span>${name}</span>`;
+                footerLang.textContent = name.endsWith('.json') ? 'JSON' : (name.endsWith('.md') ? 'Markdown' : 'JavaScript');
+                footerLnCol.textContent = `Ln 1, Col 1`;
+            } else {
+                 breadcrumbsContainer.innerHTML = '';
+            }
+            
+            // Bottom Panel
+            bottomPanel.style.height = bottomPanelVisible ? `${bottomPanelHeight}px` : '0px';
+            if(bottomPanelVisible) renderTerminal();
+
+        };
+        
+        // --- EVENT HANDLERS ---
+        const handleTerminalSubmit = (e) => {
+             e.preventDefault();
+             const input = document.getElementById('terminal-input');
+             const cmd = input.value.trim();
+             if(!cmd) return;
+             
+             const newLines = [];
+             switch(cmd.toLowerCase()) {
+                case 'help': newLines.push({ type: 'info', text: 'Available commands:' }, { type: 'default', text: '  whoami, skills, projects, contact, clear' }); break;
+                case 'whoami': newLines.push({ type: 'default', text: `${portfolioData.name} - ${portfolioData.role}` }); break;
+                case 'skills':
+                     newLines.push({ type: 'info', text: 'Listing all skills...' });
+                     Object.entries(portfolioData.skills).forEach(([category, skills]) => { newLines.push({ type: 'default', text: `  ${category}: ${skills.join(', ')}`}) }); break;
+                case 'projects': newLines.push({ type: 'info', text: 'Listing projects:' }, ...portfolioData.projects.map(p => ({type: 'default', text: `  - ${p.title}`}))); break;
+                case 'contact': newLines.push({ type: 'info', text: 'Contact Info:' }, { type: 'default', text: `  Email: ${portfolioData.contact.email}` }, { type: 'default', text: `  GitHub: ${portfolioData.contact.github}` }, { type: 'default', text: `  LinkedIn: ${portfolioData.contact.linkedin}` }); break;
+                case 'clear': terminalLines = []; updateUI(); return;
+                default: newLines.push({ type: 'error', text: `command not found: ${cmd}` });
+             }
+             terminalLines.push({ type: 'command', text: cmd }, ...newLines);
+             updateUI();
+        };
+        
+        activityBar.addEventListener('click', e => {
+            const button = e.target.closest('button');
+            if(!button || !button.dataset.view) return;
+            const view = button.dataset.view;
+
+            isDebugMode = view === 'debug';
+            
+            if (sidebarVisible && activeView === view) {
+                sidebarVisible = false;
+            } else { 
+                activeView = view;
+                sidebarVisible = true;
+            }
+            updateUI();
+        });
+
+        sidebar.addEventListener('click', e => {
+             const sectionHeader = e.target.closest('.section-header');
+             if (sectionHeader) {
+                const sectionContent = sectionHeader.nextElementSibling;
+                const chevron = sectionHeader.querySelector('.chevron');
+                sectionContent.classList.toggle('hidden');
+                chevron.classList.toggle('rotate-90');
+                return;
+             }
+
+             const fileNode = e.target.closest('.file-node');
+             if(fileNode) {
+                const fileId = fileNode.dataset.file;
+                if (!openTabs.includes(fileId)) openTabs.push(fileId);
+                activeTab = fileId;
+                 if (isMobile) sidebarVisible = false;
+                updateUI();
+             }
+             const projectNode = e.target.closest('.project-node');
+             if(projectNode) {
+                const projectId = projectNode.dataset.projectId;
+                const project = portfolioData.projects.find(p => p.id === projectId);
+                const tabId = `${project.title.toLowerCase().replace(/\s/g, '-')}.js`;
+                if (!openTabs.includes(tabId)) openTabs.push(tabId);
+                activeTab = tabId;
+                if (isMobile) sidebarVisible = false;
+                updateUI();
+             }
+        });
+
+        tabsContainer.addEventListener('click', e => {
+            const tabBtn = e.target.closest('.tab-btn');
+            const closeBtn = e.target.closest('.close-btn');
+            const mobileBtn = e.target.closest('#mobile-menu-btn');
+
+            if (mobileBtn) {
+                sidebarVisible = !sidebarVisible;
+            } else if (closeBtn) {
+                e.stopPropagation();
+                const tabId = closeBtn.dataset.closeId;
+                const tabIndex = openTabs.indexOf(tabId);
+                openTabs = openTabs.filter(tab => tab !== tabId);
+                if (activeTab === tabId && openTabs.length > 0) {
+                    activeTab = openTabs[Math.max(0, tabIndex - 1)];
+                } else if (openTabs.length === 0) {
+                    activeTab = null;
+                }
+            } else if (tabBtn) {
+                activeTab = tabBtn.dataset.tabId;
+            }
+            updateUI();
+        });
+        
+        toggleTerminalBtn.addEventListener('click', () => {
+             bottomPanelVisible = !bottomPanelVisible;
+             updateUI();
+        });
+        
+        window.addEventListener('resize', () => {
+            const wasMobile = isMobile;
+            isMobile = window.innerWidth < 768;
+            if (wasMobile !== isMobile) {
+                sidebarVisible = !isMobile;
+            }
+            updateUI();
+        });
+        
+        // Resizer Logic
+        const resize = (e, resizer) => {
+            if (resizer === sidebarResizer) {
+                const newWidth = e.clientX;
+                if (newWidth > 150 && newWidth < 500) {
+                    sidebarWidth = newWidth;
+                    sidebar.style.width = `${sidebarWidth}px`;
+                }
+            } else if (resizer === bottomPanelResizer) {
+                const newHeight = window.innerHeight - e.clientY;
+                 if (newHeight > 50 && newHeight < (window.innerHeight / 1.5)) {
+                    bottomPanelHeight = newHeight;
+                    bottomPanel.style.height = `${bottomPanelHeight}px`;
+                 }
+            }
+        };
+
+        [sidebarResizer, bottomPanelResizer].forEach(resizer => {
+            resizer.addEventListener('mousedown', e => {
+                e.preventDefault();
+                document.body.style.cursor = resizer === sidebarResizer ? 'col-resize' : 'row-resize';
+                const onMouseMove = (moveEvent) => resize(moveEvent, resizer);
+                const onMouseUp = () => {
+                    document.body.style.cursor = 'default';
+                    document.removeEventListener('mousemove', onMouseMove);
+                }
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp, { once: true });
+            });
+        });
+
+        // Settings Modal Logic
+        openSettingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+        closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) settingsModal.classList.add('hidden');
+        });
+        
+        document.querySelectorAll('input[name="theme"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                document.body.dataset.theme = e.target.value;
+                updateUI(); // Redraw UI to apply theme to indicators
+            });
+        });
+
+        // --- INITIAL RENDER ---
+        document.addEventListener('DOMContentLoaded', updateUI);
+    </script>
+</body>
+</html>
+
